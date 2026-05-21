@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Analysis of Study 5 on user preferences across sycophantic, neutral, and challenging AI models."""
 
 import json
