@@ -96,7 +96,8 @@ def run_ols(data, formula, coef, analysis, outcome, results):
 
     b, se, p = model.params[coef], model.bse[coef], model.pvalues[coef]
     ci_lo, ci_hi = b - 1.96 * se, b + 1.96 * se
-    sd = np.sqrt(model.mse_resid)
+    outcome_col = formula.split("~")[0].strip()
+    sd = data[outcome_col].std(ddof=1)
     d, d_lo, d_hi = b / sd, ci_lo / sd, ci_hi / sd
     n_obs = int(model.nobs)
 
@@ -137,8 +138,9 @@ def run_mixed(data, formula, coef_of_interest, analysis, outcome, results):
 
     b, se, p = model.fe_params[found], model.bse[found], model.pvalues[found]
     ci_lo, ci_hi = b - 1.96 * se, b + 1.96 * se
-    scale = np.sqrt(model.scale)
-    d, d_lo, d_hi = b / scale, ci_lo / scale, ci_hi / scale
+    outcome_col = formula.split("~")[0].strip()
+    sd = data.groupby("participant_id")[outcome_col].mean().std(ddof=1)
+    d, d_lo, d_hi = b / sd, ci_lo / sd, ci_hi / sd
 
     results.append({
         "analysis": analysis, "outcome": outcome,
@@ -317,7 +319,7 @@ for ref, ref_label in [("balanced", "syco vs balanced"), ("challenging", "syco v
             print(f"  failed for {vlabel}: {e}", flush=True)
             continue
 
-        scale = np.sqrt(model.scale)
+        sd = sub.groupby("participant_id")[var].mean().std(ddof=1)
         for coef_key, role in [
             ("model_condition[T.syco]",         "main effect"),
             ("time_c:model_condition[T.syco]",  "condition x time"),
@@ -328,13 +330,13 @@ for ref, ref_label in [("balanced", "syco vs balanced"), ("challenging", "syco v
             b  = model.fe_params[coef_key]
             se = model.bse[coef_key]
             p  = model.pvalues[coef_key]
-            d  = b / scale
+            d  = b / sd
             results.append({
                 "analysis": f"E3: {ref_label} ({role})",
                 "outcome": vlabel, "coefficient": coef_key,
                 "cohens_d": d,
-                "ci_lower": (b - 1.96 * se) / scale,
-                "ci_upper": (b + 1.96 * se) / scale,
+                "ci_lower": (b - 1.96 * se) / sd,
+                "ci_upper": (b + 1.96 * se) / sd,
                 "p_value": p, "b": b,
                 "b_ci_lower": b - 1.96 * se, "b_ci_upper": b + 1.96 * se,
                 "n_obs": int(model.nobs), "model_type": "MixedLM",
@@ -452,17 +454,17 @@ for var, vlabel in [("social_time_num", "Social Time"),
         model = smf.mixedlm(f"{var} ~ time_c * model_condition", data=data_sub,
                             groups=data_sub["participant_id"], re_formula="1").fit(reml=True)
         print(model.summary().tables[1])
+        sd = data_sub.groupby("participant_id")[var].mean().std(ddof=1)
         for coef in model.fe_params.index:
             if "time_c:model_condition" in coef:
                 b, se, p = model.fe_params[coef], model.bse[coef], model.pvalues[coef]
-                scale = np.sqrt(model.scale)
-                d = b / scale
+                d = b / sd
                 results.append({
                     "analysis": "E5: condition x time interaction",
                     "outcome": f"{vlabel} ({coef})",
                     "cohens_d": d,
-                    "ci_lower": (b - 1.96 * se) / scale,
-                    "ci_upper": (b + 1.96 * se) / scale,
+                    "ci_lower": (b - 1.96 * se) / sd,
+                    "ci_upper": (b + 1.96 * se) / sd,
                     "p_value": p, "b": b,
                     "b_ci_lower": b - 1.96 * se, "b_ci_upper": b + 1.96 * se,
                     "n_obs": int(model.nobs), "model_type": "MixedLM",
@@ -500,16 +502,17 @@ try:
     model = smf.mixedlm("intentions_num ~ time_c * model_condition", data=df_traj,
                         groups=df_traj["participant_id"], re_formula="1").fit(reml=True)
     print(model.summary().tables[1])
+    sd_int = df_traj.groupby("participant_id")["intentions_num"].mean().std(ddof=1)
     for coef in model.fe_params.index:
         if "time_c:model_condition" in coef:
             b, se, p = model.fe_params[coef], model.bse[coef], model.pvalues[coef]
-            d = b / np.sqrt(model.scale)
+            d = b / sd_int
             results.append({
                 "analysis": "E6: intention trajectory",
                 "outcome": f"Intention ({coef})",
                 "cohens_d": d,
-                "ci_lower": (b - 1.96 * se) / np.sqrt(model.scale),
-                "ci_upper": (b + 1.96 * se) / np.sqrt(model.scale),
+                "ci_lower": (b - 1.96 * se) / sd_int,
+                "ci_upper": (b + 1.96 * se) / sd_int,
                 "p_value": p, "b": b,
                 "b_ci_lower": b - 1.96 * se, "b_ci_upper": b + 1.96 * se,
                 "n_obs": int(model.nobs), "model_type": "MixedLM",

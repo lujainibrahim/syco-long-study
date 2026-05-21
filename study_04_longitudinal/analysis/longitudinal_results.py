@@ -36,9 +36,7 @@ time_map_weekly = {'pre': 0, 'four': 1, 'eight': 2, 'twelve': 3}
 
 results_rows = []
 
-# function to run a mixed model and collect results
 def run_mixed_model(data, formula, groups, condition_coef, analysis_label, outcome_label):
-    """Fit MixedLM, extract condition effect size / CI / p."""
     data = data.reset_index(drop=True)
     data['participant_id'] = data['participant_id'].astype(str)
 
@@ -51,12 +49,12 @@ def run_mixed_model(data, formula, groups, condition_coef, analysis_label, outco
     p = model.pvalues[condition_coef]
     ci_lo = b - 1.96 * se
     ci_hi = b + 1.96 * se
-    scale = np.sqrt(model.scale)
-    d = b / scale
-    d_lo = ci_lo / scale
-    d_hi = ci_hi / scale
+    outcome_col = formula.split('~')[0].strip()
+    between_pid_sd = data.groupby('participant_id')[outcome_col].mean().std(ddof=1)
+    d = b / between_pid_sd
+    d_lo = ci_lo / between_pid_sd
+    d_hi = ci_hi / between_pid_sd
     n_obs = int(model.nobs)
-    n_groups = int(model.k_re)
 
     row = {
         'analysis': analysis_label,
@@ -413,7 +411,6 @@ def _composite(df_, cols, mapping):
     return pd.DataFrame({c: _to_num(df_[c], mapping) for c in cols}).mean(axis=1)
 
 def run_ols_ancova(data, formula, condition_coef, analysis_label, outcome_label):
-    """Fit pre-post ANCOVA; report condition effect d / CI / p."""
     data = data.reset_index(drop=True)
     model = smf.ols(formula, data=data).fit()
     if condition_coef not in model.params.index:
@@ -425,9 +422,10 @@ def run_ols_ancova(data, formula, condition_coef, analysis_label, outcome_label)
     se = model.bse[condition_coef]
     p = model.pvalues[condition_coef]
     ci_lo, ci_hi = b - 1.96 * se, b + 1.96 * se
-    resid_sd = np.sqrt(model.mse_resid)
-    d = b / resid_sd
-    d_lo, d_hi = ci_lo / resid_sd, ci_hi / resid_sd
+    outcome_col = formula.split('~')[0].strip()
+    between_pid_sd = data[outcome_col].std(ddof=1)
+    d = b / between_pid_sd
+    d_lo, d_hi = ci_lo / between_pid_sd, ci_hi / between_pid_sd
     n_obs = int(model.nobs)
     results_rows.append({
         'analysis': analysis_label, 'outcome': outcome_label,

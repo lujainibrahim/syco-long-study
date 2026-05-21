@@ -71,7 +71,9 @@ def fit(df, formula, label):
     m = smf.mixedlm(formula, data=df, groups=df["participant_id"]).fit(reml=True)
     coef_name = next(k for k in m.fe_params.index if "T.syco" in k)
     b = m.fe_params[coef_name]; se = m.bse[coef_name]; p = m.pvalues[coef_name]
-    sd = np.sqrt(m.scale)
+    # Cohen's d = beta / SD of per-participant outcome means within the contrast.
+    outcome_col = formula.split("~")[0].strip()
+    sd = df.groupby("participant_id")[outcome_col].mean().std(ddof=1)
     return {
         "label": label,
         "n_obs": int(m.nobs),

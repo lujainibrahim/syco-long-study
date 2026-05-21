@@ -60,8 +60,8 @@ def likert(s, mapping=AGREE_7):
         return pd.to_numeric(s, errors="coerce")
     return mapped
 
-def partial_d(model, coef):
-    return model.params[coef] / np.sqrt(model.mse_resid)
+def cohen_d(model, coef, outcome_series):
+    return model.params[coef] / outcome_series.std(ddof=1)
 
 def compute_d(grp, var):
     s = grp.loc[grp["cond"] == "sycophantic", var].dropna()
