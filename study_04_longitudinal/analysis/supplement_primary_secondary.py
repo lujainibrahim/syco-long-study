@@ -20,7 +20,8 @@ AGREE_7 = {
 
 AGREE_5 = {
     "strongly disagree": 1, "disagree": 2,
-    "neither agree nor disagree": 3, "agree": 4, "strongly agree": 5,
+    "neither agree nor disagree": 3, "neither disagree nor agree": 3,
+    "agree": 4, "strongly agree": 5,
 }
 
 AVERAGE_MAP = {
@@ -102,10 +103,18 @@ def run_ols(data, formula, condition_coef, analysis_label, outcome_label, n_labe
     ci_lo = b - 1.96 * se
     ci_hi = b + 1.96 * se
 
-    resid_sd = np.sqrt(model.mse_resid)
-    d     = b / resid_sd
-    d_lo  = ci_lo / resid_sd
-    d_hi  = ci_hi / resid_sd
+    outcome_col = formula.split("~")[0].strip()
+    _groups = [g[outcome_col].dropna() for _, g in data.groupby("model_condition")
+               if g[outcome_col].dropna().size >= 2]
+    if len(_groups) >= 2:
+        _num = sum((g.size - 1) * g.var(ddof=1) for g in _groups)
+        _den = sum(g.size for g in _groups) - len(_groups)
+        pooled_sd = float(np.sqrt(_num / _den))
+    else:
+        pooled_sd = float(data[outcome_col].std(ddof=1))
+    d     = b / pooled_sd
+    d_lo  = ci_lo / pooled_sd
+    d_hi  = ci_hi / pooled_sd
     n_obs = int(model.nobs)
 
     row = {
@@ -144,10 +153,11 @@ def run_mixed(data, formula, condition_coef, analysis_label, outcome_label):
     ci_lo = b - 1.96 * se
     ci_hi = b + 1.96 * se
 
-    scale = np.sqrt(model.scale)
-    d     = b / scale
-    d_lo  = ci_lo / scale
-    d_hi  = ci_hi / scale
+    outcome_col = formula.split("~")[0].strip()
+    between_pid_sd = data.groupby("participant_id")[outcome_col].mean().std(ddof=1)
+    d     = b / between_pid_sd
+    d_lo  = ci_lo / between_pid_sd
+    d_hi  = ci_hi / between_pid_sd
     n_obs = int(model.nobs)
 
     row = {
@@ -221,11 +231,21 @@ print("  h6: affective well-being")
 print("=" * 70)
 
 wb_cols = [f"well-being_{i}" for i in range(1, 10)]
+WB_REVERSE = {"well-being_7", "well-being_8", "well-being_9"}
 
-pre["WB_pre"] = composite(pre, wb_cols, AGREE_5)
+def wb_composite(df, cols, likert_map, reverse_cols=WB_REVERSE):
+    parts = {}
+    for c in cols:
+        s = to_numeric(df[c], likert_map)
+        if c in reverse_cols:
+            s = 6 - s
+        parts[c] = s
+    return pd.DataFrame(parts).mean(axis=1)
 
-s12["WB_post"] = composite(s12, wb_cols, AGREE_5)
-nollm["WB_post"] = composite(nollm, wb_cols, AGREE_5)
+pre["WB_pre"] = wb_composite(pre, wb_cols, AGREE_5)
+
+s12["WB_post"] = wb_composite(s12, wb_cols, AGREE_5)
+nollm["WB_post"] = wb_composite(nollm, wb_cols, AGREE_5)
 
 wb_post = pd.concat([
     s12[["participant_id", "WB_post", "model_condition"]],

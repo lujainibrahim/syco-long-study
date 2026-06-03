@@ -97,7 +97,14 @@ def run_ols(data, formula, coef, analysis, outcome, results):
     b, se, p = model.params[coef], model.bse[coef], model.pvalues[coef]
     ci_lo, ci_hi = b - 1.96 * se, b + 1.96 * se
     outcome_col = formula.split("~")[0].strip()
-    sd = data[outcome_col].std(ddof=1)
+    _groups = [g[outcome_col].dropna() for _, g in data.groupby("model_condition")
+               if g[outcome_col].dropna().size >= 2]
+    if len(_groups) >= 2:
+        _num = sum((g.size - 1) * g.var(ddof=1) for g in _groups)
+        _den = sum(g.size for g in _groups) - len(_groups)
+        sd = float(np.sqrt(_num / _den))
+    else:
+        sd = float(data[outcome_col].std(ddof=1))
     d, d_lo, d_hi = b / sd, ci_lo / sd, ci_hi / sd
     n_obs = int(model.nobs)
 

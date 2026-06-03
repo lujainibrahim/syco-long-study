@@ -423,9 +423,16 @@ def run_ols_ancova(data, formula, condition_coef, analysis_label, outcome_label)
     p = model.pvalues[condition_coef]
     ci_lo, ci_hi = b - 1.96 * se, b + 1.96 * se
     outcome_col = formula.split('~')[0].strip()
-    between_pid_sd = data[outcome_col].std(ddof=1)
-    d = b / between_pid_sd
-    d_lo, d_hi = ci_lo / between_pid_sd, ci_hi / between_pid_sd
+    _groups = [g[outcome_col].dropna() for _, g in data.groupby("model_condition")
+               if g[outcome_col].dropna().size >= 2]
+    if len(_groups) >= 2:
+        _num = sum((g.size - 1) * g.var(ddof=1) for g in _groups)
+        _den = sum(g.size for g in _groups) - len(_groups)
+        pooled_sd = float(np.sqrt(_num / _den))
+    else:
+        pooled_sd = float(data[outcome_col].std(ddof=1))
+    d = b / pooled_sd
+    d_lo, d_hi = ci_lo / pooled_sd, ci_hi / pooled_sd
     n_obs = int(model.nobs)
     results_rows.append({
         'analysis': analysis_label, 'outcome': outcome_label,
