@@ -30,9 +30,9 @@ LIKERT_7_COMFORT = {
     "moderately": 4, "somewhat": 3, "slightly": 2, "not at all": 1,
 }
 CERTAINTY_MAP = {
-    "very uncertain": 1, "somewhat uncertain": 2, "uncertain": 3,
-    "neither certain nor uncertain": 4, "certain": 5,
-    "somewhat certain": 6, "very certain": 7,
+    "very uncertain": 1, "uncertain": 2, "somewhat uncertain": 3,
+    "neither certain nor uncertain": 4, "somewhat certain": 5,
+    "certain": 6, "very certain": 7,
 }
 AFFECT_MAP = {
     "much worse than before": 1, "somewhat worse than before": 2,

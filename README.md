@@ -32,4 +32,4 @@ cd study_01_support_importance
 python analyze_study_01.py
 ```
 
-Study 4's analyses live under `study_04_longitudinal/analysis/` and read from `study_04_longitudinal/data/`; run them from `study_04_longitudinal/` (e.g. `python analysis/longitudinal_results.py`).
+Study 4's analyses live under `study_04_longitudinal/analysis/` and read from `study_04_longitudinal/data/`; run them from `study_04_longitudinal/analysis/` (e.g. `cd study_04_longitudinal/analysis && python longitudinal_results.py`).

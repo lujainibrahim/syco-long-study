@@ -33,9 +33,9 @@ HELPFULNESS_MAP = {
     "Extremely helpful": 7,
 }
 CERTAINTY_MAP = {
-    "Very uncertain": 1, "Somewhat uncertain": 2, "Uncertain": 3,
-    "Neither certain nor uncertain": 4, "Certain": 5,
-    "Somewhat certain": 6, "Very certain": 7,
+    "Very uncertain": 1, "Uncertain": 2, "Somewhat uncertain": 3,
+    "Neither certain nor uncertain": 4, "Somewhat certain": 5,
+    "Certain": 6, "Very certain": 7,
 }
 SOCIAL_SAT_MAP = {
     "Very dissatisfied": 1, "Dissatisfied": 2, "Somewhat dissatisfied": 3,

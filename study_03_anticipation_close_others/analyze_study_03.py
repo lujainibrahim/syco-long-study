@@ -20,7 +20,7 @@ AGREE_7 = {
     "Strongly agree": 7,
 }
 CERTAINTY_7 = {
-    "Very uncertain": 1, "Somewhat uncertain": 2, "Uncertain": 3,
+    "Very uncertain": 1, "Uncertain": 2, "Somewhat uncertain": 3,
     "Neither certain nor uncertain": 4, "Somewhat certain": 5,
     "Certain": 6, "Very certain": 7,
 }
@@ -126,7 +126,7 @@ for var, label in PRIMARY:
     mu = sm.OLS(sub[var], Xu).fit()
     bu, pu = mu.params["syco"], mu.pvalues["syco"]
     ciu = mu.conf_int().loc["syco"]
-    du = partial_d(mu, "syco")
+    du = bu / np.sqrt(mu.mse_resid)
 
     # IOS-adjusted
     Xa = sm.add_constant(sub[["syco", "ios_n"]])

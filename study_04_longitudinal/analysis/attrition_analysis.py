@@ -33,12 +33,14 @@ LSNS_MAP = {"0": 0, "1": 1, "2": 2, "3 or 4": 3.5, "5-8": 6.5, "9+": 9}
 AI_USE_MAP = {"Never": 1, "Rarely": 2, "Monthly": 3, "Weekly": 4, "Daily": 5}
 
 AVERAGE_MAP = {"Much worse than average": 1, "Somewhat worse than average": 2,
-               "About average": 3, "Somewhat better than average": 4,
-               "Much better than average": 5}
+               "Slightly worse than average": 3, "Average": 4,
+               "Slightly better than average": 5, "Somewhat better than average": 6,
+               "Much better than average": 7}
 
 OTHER_MAP = {"Much worse than them": 1, "Somewhat worse than them": 2,
-             "About the same": 3, "Somewhat better than them": 4,
-             "Much better than them": 5}
+             "Slightly worse than them": 3, "About the same": 4,
+             "Slightly better than them": 5, "Somewhat better than them": 6,
+             "Much better than them": 7}
 
 # Scale definitions
 
@@ -383,7 +385,7 @@ print("=" * 80)
 no_llm_assignments = pd.read_csv("../data/assignments_no_llm.csv")
 no_llm_control = pd.read_csv("../data/no_llm_control.csv")
 
-nollm_assigned_pids = set(no_llm_assignments["prolific_id"].unique())
+nollm_assigned_pids = set(no_llm_assignments["participant_id"].unique())
 nollm_completed_pids = set(no_llm_control["participant_id"].unique())
 nollm_dropped_pids = nollm_assigned_pids - nollm_completed_pids
 
